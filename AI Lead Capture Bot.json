@@ -1,0 +1,245 @@
+{
+  "name": "AI Lead Capture Bot",
+  "nodes": [
+    {
+      "parameters": {
+        "updates": [
+          "message"
+        ],
+        "additionalFields": {}
+      },
+      "id": "3343a112-3b5a-4b35-9f3a-67d717aa2a63",
+      "name": "Telegram Trigger",
+      "type": "n8n-nodes-base.telegramTrigger",
+      "typeVersion": 1.5,
+      "position": [
+        0,
+        0
+      ],
+      "webhookId": "2861d25e-4c5f-4313-935a-f2d3708a86e8",
+      "credentials": {
+        "telegramApi": {
+          "id": "C5kOvuaSklNkMCAe",
+          "name": "Telegram account 4"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Telegram Trigger').item.json.message.chat.id }}",
+        "text": "let raw = $input.first().json.candidates[0].content.parts[0].text; let clean = raw.replace(/```json|```/g, '').trim(); let data = JSON.parse(clean);  let trigger = $('Telegram Trigger').item.json.message; data.name = trigger.from.first_name; data.date = new Date().toLocaleDateString(); data.status = \"New\"; return [{ json: data }];",
+        "additionalFields": {}
+      },
+      "id": "ff0cb5df-9a3e-4d1d-b5d5-2ad4079e7bac",
+      "name": "Collect Lead Details",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        224,
+        0
+      ],
+      "webhookId": "b996e112-027c-42a4-b676-26aed0001f7b",
+      "credentials": {
+        "telegramApi": {
+          "id": "C5kOvuaSklNkMCAe",
+          "name": "Telegram account 4"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const d = $input.first().json.data || {};\nreturn [{ json: {\n  name: d.name || \"unknown\",\n  requirement: d.requirement || \"unknown\",\n  budget: d.budget || \"unknown\",\n  date: new Date().toLocaleDateString(),\n  status: \"New\"\n} }];"
+      },
+      "id": "41803b45-fd5e-4941-8184-5dc57acd6033",
+      "name": "Build Row",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        448,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "appendOrUpdate",
+        "documentId": {
+          "__rl": true,
+          "value": "14nQbTEv7xRn1W6PAAS7kW915EVSFAr4xjqxdWKA1icw",
+          "mode": "list",
+          "cachedResultName": "Lead CRM",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/14nQbTEv7xRn1W6PAAS7kW915EVSFAr4xjqxdWKA1icw/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/14nQbTEv7xRn1W6PAAS7kW915EVSFAr4xjqxdWKA1icw/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Date": "={{ $json.date }}",
+            "Name": "={{ $json.name }}",
+            "Requirement": "={{ $json.requirement }}",
+            "Budget": "={{ $json.budget }}",
+            "status": "={{ $json.status }}"
+          },
+          "matchingColumns": [
+            "Name"
+          ],
+          "schema": [
+            {
+              "id": "Date",
+              "displayName": "Date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Name",
+              "displayName": "Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Requirement",
+              "displayName": "Requirement",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Budget",
+              "displayName": "Budget",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "status",
+              "displayName": "status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "4a315eea-f8e2-4588-aa0c-4489d2a33395",
+      "name": "Append or update row in sheet",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        672,
+        0
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "27KUhEp5BjfBujhX",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Telegram Trigger').item.json.message.chat.id }}",
+        "text": "=Thanks {{ $json.Name }}! ✅ We've recorded your request ({{ $json.Requirement }}, budget: {{ $json.Budget }}). Our team will contact you soon.",
+        "additionalFields": {
+          "appendAttribution": false
+        }
+      },
+      "id": "108abbb3-d99d-44cf-b289-a027def3a2b4",
+      "name": "Send Confirmation",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        896,
+        0
+      ],
+      "webhookId": "8f5037f2-1aeb-4180-9927-f8a2701d5ad7",
+      "credentials": {
+        "telegramApi": {
+          "id": "C5kOvuaSklNkMCAe",
+          "name": "Telegram account 4"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Telegram Trigger": {
+      "main": [
+        [
+          {
+            "node": "Collect Lead Details",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Collect Lead Details": {
+      "main": [
+        [
+          {
+            "node": "Build Row",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Row": {
+      "main": [
+        [
+          {
+            "node": "Append or update row in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Append or update row in sheet": {
+      "main": [
+        [
+          {
+            "node": "Send Confirmation",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false,
+    "errorWorkflow": "7qjksPCW5EMuwPWA"
+  },
+  "versionId": "e5243c30-0a57-4f64-a894-0d16215c4448",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "64e9656d627ec40a0c2cc0af63b8505a7fbf62a331582fd860eabd9ebffb3ba7"
+  },
+  "nodeGroups": [],
+  "id": "QSBbqJw4z9F52SuJ",
+  "tags": []
+}
